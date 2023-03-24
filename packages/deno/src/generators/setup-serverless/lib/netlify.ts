@@ -6,6 +6,7 @@ import {
   Tree,
   updateProjectConfiguration,
 } from '@nrwl/devkit';
+import { dirname } from 'path';
 import { assertNoTarget } from './utils';
 
 export function addNetlifyConfig(
@@ -55,12 +56,11 @@ function addTargets(tree: Tree, projectConfig: ProjectConfiguration) {
 }
 
 function addNetlifyToml(tree: Tree, fnDir: string) {
-  if (tree.exists('netlify.toml')) {
-    // TODO(caleb): merge settings?
-    console.warn('netlify.toml already exists, skipping.');
-  } else {
+  const netlifyPath = joinPathFragments(dirname(fnDir), 'netlify.toml');
+
+  if (!tree.exists(netlifyPath)) {
     tree.write(
-      'netlify.toml',
+      netlifyPath,
       `# Netlify Configuration File: https://docs.netlify.com/configure-builds/file-based-configuration
 [build]
   # custom directory where edge functions are located.

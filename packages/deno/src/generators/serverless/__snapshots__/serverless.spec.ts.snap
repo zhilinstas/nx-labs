@@ -1,0 +1,211 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`serverless generator should setup deno-deploy project 1`] = `
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "my-deno-deploy-app",
+  "projectType": "application",
+  "root": "apps/my-deno-deploy-app",
+  "sourceRoot": "apps/my-deno-deploy-app/src",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nrwl/deno:emit",
+      "options": {
+        "denoConfig": "apps/my-deno-deploy-app/deno.json",
+        "main": "apps/my-deno-deploy-app/src/main.ts",
+        "outputFile": "dist/apps/my-deno-deploy-app/main.js",
+      },
+      "outputs": [
+        "dist/apps/my-deno-deploy-app",
+      ],
+    },
+    "deploy": {
+      "configurations": {
+        "preview": {
+          "command": "deployctl deploy --project=<Your-Deno-Deploy-Project-Name> --import-map=import_map.json --exclude=node_modules apps/my-deno-deploy-app/src/main.ts",
+        },
+        "production": {
+          "command": "deployctl deploy --project=<Your-Deno-Deploy-Project-Name> --import-map=import_map.json --exclude=node_modules --prod apps/my-deno-deploy-app/src/main.ts",
+        },
+      },
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "deployctl deploy --project=<Your-Deno-Deploy-Project-Name> --import-map=import_map.json --exclude=node_modules  apps/my-deno-deploy-app/src/main.ts --dry-run",
+      },
+    },
+    "lint": {
+      "executor": "@nrwl/deno:lint",
+      "options": {
+        "denoConfig": "apps/my-deno-deploy-app/deno.json",
+      },
+    },
+    "serve": {
+      "executor": "@nrwl/deno:run",
+      "options": {
+        "buildTarget": "my-deno-deploy-app:build",
+      },
+    },
+    "test": {
+      "executor": "@nrwl/deno:test",
+      "options": {
+        "coverageDirectory": "coverage/apps/my-deno-deploy-app",
+        "denoConfig": "apps/my-deno-deploy-app/deno.json",
+      },
+      "outputs": [
+        "coverage/apps/my-deno-deploy-app",
+      ],
+    },
+  },
+}
+`;
+
+exports[`serverless generator should setup empty project 1`] = `
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "my-plain-app",
+  "projectType": "application",
+  "root": "apps/my-plain-app",
+  "sourceRoot": "apps/my-plain-app/src",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nrwl/deno:emit",
+      "options": {
+        "denoConfig": "apps/my-plain-app/deno.json",
+        "main": "apps/my-plain-app/src/main.ts",
+        "outputFile": "dist/apps/my-plain-app/main.js",
+      },
+      "outputs": [
+        "dist/apps/my-plain-app",
+      ],
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo "TODO configure deploy target"",
+      },
+    },
+    "lint": {
+      "executor": "@nrwl/deno:lint",
+      "options": {
+        "denoConfig": "apps/my-plain-app/deno.json",
+      },
+    },
+    "serve": {
+      "executor": "@nrwl/deno:run",
+      "options": {
+        "buildTarget": "my-plain-app:build",
+      },
+    },
+    "test": {
+      "executor": "@nrwl/deno:test",
+      "options": {
+        "coverageDirectory": "coverage/apps/my-plain-app",
+        "denoConfig": "apps/my-plain-app/deno.json",
+      },
+      "outputs": [
+        "coverage/apps/my-plain-app",
+      ],
+    },
+  },
+}
+`;
+
+exports[`serverless generator should setup in --directory 1`] = `
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "nested-my-plain-app",
+  "projectType": "application",
+  "root": "apps/nested/my-plain-app",
+  "sourceRoot": "apps/nested/my-plain-app/src",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nrwl/deno:emit",
+      "options": {
+        "denoConfig": "apps/nested/my-plain-app/deno.json",
+        "main": "apps/nested/my-plain-app/src/main.ts",
+        "outputFile": "dist/apps/nested/my-plain-app/main.js",
+      },
+      "outputs": [
+        "dist/apps/nested/my-plain-app",
+      ],
+    },
+    "deploy": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "echo "TODO configure deploy target"",
+      },
+    },
+    "lint": {
+      "executor": "@nrwl/deno:lint",
+      "options": {
+        "denoConfig": "apps/nested/my-plain-app/deno.json",
+      },
+    },
+    "serve": {
+      "executor": "@nrwl/deno:run",
+      "options": {
+        "buildTarget": "nested-my-plain-app:build",
+      },
+    },
+    "test": {
+      "executor": "@nrwl/deno:test",
+      "options": {
+        "coverageDirectory": "coverage/apps/nested/my-plain-app",
+        "denoConfig": "apps/nested/my-plain-app/deno.json",
+      },
+      "outputs": [
+        "coverage/apps/nested/my-plain-app",
+      ],
+    },
+  },
+}
+`;
+
+exports[`serverless generator should setup netlify project 1`] = `
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "my-netlify-app",
+  "projectType": "application",
+  "root": "apps/my-netlify-app",
+  "sourceRoot": "apps/my-netlify-app/src",
+  "tags": [],
+  "targets": {
+    "deploy": {
+      "configurations": {
+        "production": {
+          "command": "yarn netlify deploy --prod",
+        },
+      },
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn netlify deploy",
+      },
+    },
+    "lint": {
+      "executor": "@nrwl/deno:lint",
+      "options": {
+        "denoConfig": "apps/my-netlify-app/deno.json",
+      },
+    },
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn netlify dev",
+      },
+    },
+    "test": {
+      "executor": "@nrwl/deno:test",
+      "options": {
+        "coverageDirectory": "coverage/apps/my-netlify-app",
+        "denoConfig": "apps/my-netlify-app/deno.json",
+      },
+      "outputs": [
+        "coverage/apps/my-netlify-app",
+      ],
+    },
+  },
+}
+`;

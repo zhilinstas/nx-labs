@@ -1,19 +1,22 @@
 import {
+  GeneratorCallback,
   joinPathFragments,
   output,
   ProjectConfiguration,
   Tree,
   updateProjectConfiguration,
 } from '@nrwl/devkit';
+import { execSync } from 'child_process';
+import { prompt } from 'enquirer';
 import { assertNoTarget } from './utils';
 
 export function addDenoDeployConfig(
   tree: Tree,
   projectConfig: ProjectConfiguration
-) {
+): GeneratorCallback {
   assertNoTarget(projectConfig, 'deploy');
 
-  addDeployTarget(tree, projectConfig);
+  return addDeployTarget(tree, projectConfig);
 }
 
 function addDeployTarget(tree: Tree, projectConfig: ProjectConfiguration) {
@@ -59,6 +62,18 @@ function addDeployTarget(tree: Tree, projectConfig: ProjectConfiguration) {
 
   updateProjectConfiguration(tree, projectConfig.name, projectConfig);
 
+  if (installDeployCtl()) {
+    return () => {
+      execSync(
+        'deno install -A --no-check -r -f https://deno.land/x/deploy/deployctl.ts',
+        {
+          encoding: 'utf-8',
+          env: process.env,
+        }
+      );
+    };
+  }
+
   output.note({
     title: 'Next Step: Install deployctl',
     bodyLines: [
@@ -69,4 +84,28 @@ function addDeployTarget(tree: Tree, projectConfig: ProjectConfiguration) {
       `Installing the Deno Deploy CLI is not required if you're using the GitHub Action integration.`,
     ],
   });
+
+  return () => undefined;
+}
+
+async function installDeployCtl() {
+  try {
+    execSync('deployctl --version', {
+      encoding: 'utf-8',
+      env: process.env,
+    });
+    return false;
+  } catch {
+    if (process.env.NX_INTERACTIVE && process.env.NX_INTERACTIVE === 'true') {
+      return (
+        await prompt<{ install: boolean }>({
+          type: 'confirm',
+          name: 'install',
+          message: 'Would you like to install the Deno Deploy CLI?',
+        })
+      ).install;
+    }
+
+    return false;
+  }
 }

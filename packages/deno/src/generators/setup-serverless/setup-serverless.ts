@@ -1,6 +1,6 @@
 import {
   formatFiles,
-  installPackagesTask,
+  GeneratorCallback,
   readProjectConfiguration,
   Tree,
 } from '@nrwl/devkit';
@@ -14,12 +14,14 @@ export async function denoSetupServerless(
   options: DenoSetupServerlessSchema
 ) {
   const projectConfig = readProjectConfiguration(tree, options.project);
+  let task: GeneratorCallback = () => undefined;
+
   switch (options.platform) {
     case 'netlify':
-      addNetlifyConfig(tree, projectConfig);
+      task = addNetlifyConfig(tree, projectConfig);
       break;
     case 'deno-deploy':
-      addDenoDeployConfig(tree, projectConfig);
+      task = addDenoDeployConfig(tree, projectConfig);
       break;
     case 'none':
     default:
@@ -28,8 +30,6 @@ export async function denoSetupServerless(
   }
 
   await formatFiles(tree);
-  return () => {
-    installPackagesTask(tree);
-  };
+  return task;
 }
 export default denoSetupServerless;

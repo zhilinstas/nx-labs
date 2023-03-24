@@ -1,81 +1,93 @@
 import {
   addProjectConfiguration,
+  formatFiles,
   generateFiles,
   getWorkspaceLayout,
   joinPathFragments,
   names,
   offsetFromRoot,
   ProjectConfiguration,
+  readProjectConfiguration,
   Tree,
+  updateProjectConfiguration,
+  writeJson,
 } from '@nrwl/devkit';
 import { join } from 'path';
-import { DenoAppGeneratorSchema, DenoAppNormalizedSchema } from './schema';
+import initDeno from '../init/generator';
+import denoSetupServerless from '../setup-serverless/setup-serverless';
+import { ServerlessGeneratorSchema } from './schema';
 
-export function normalizeOptions(
+type NormalizedSchema = ReturnType<typeof normalizeOptions>;
+
+export async function denoServerlessGenerator(
   tree: Tree,
-  options: DenoAppGeneratorSchema
-): DenoAppNormalizedSchema {
-  // --monorepo takes precedence over --rootProject
-  // This is for running `create-nx-workspace --preset=@nrwl/deno --monorepo`
-  const rootProject = !options.monorepo && options.rootProject;
+  options: ServerlessGeneratorSchema
+) {
+  const opts = normalizeOptions(tree, options);
 
+  await initDeno(tree);
+  addProject(tree, opts);
+  // TODO(caleb): make sure import_map work
+  addFiles(tree, opts);
+  const setupTask = await setupDeployConfig(tree, opts);
+
+  await formatFiles(tree);
+
+  return setupTask;
+}
+
+function normalizeOptions(tree: Tree, options: ServerlessGeneratorSchema) {
   const name = names(options.name).fileName;
   const projectDirectory = options.directory
     ? `${names(options.directory).fileName}/${name}`
     : name;
   const projectName = projectDirectory.replace(new RegExp('/', 'g'), '-');
-  const appDir = getWorkspaceLayout(tree).appsDir;
-  // prevent paths from being dist/./app-name
-  const projectRoot = rootProject
-    ? '.'
-    : joinPathFragments(appDir === '.' ? '' : appDir, projectDirectory);
+  const projectRoot = `${getWorkspaceLayout(tree).appsDir}/${projectDirectory}`;
+  const rootProject = projectRoot === '.' || projectRoot === '';
   const parsedTags = options.tags
     ? options.tags.split(',').map((s) => s.trim())
     : [];
 
   options.platform ??= 'none';
-  options.framework ??= 'none';
+  options.linter ??= 'deno';
+  options.unitTestRunner ??= 'deno';
 
   return {
     ...options,
-    rootProject,
     projectName,
     projectRoot,
     projectDirectory,
     parsedTags,
+    rootProject,
   };
 }
 
-export function addFiles(tree: Tree, options: DenoAppNormalizedSchema) {
+function addFiles(tree: Tree, options: NormalizedSchema) {
+  const projectConfig = readProjectConfiguration(tree, options.projectName);
   const templateOptions = {
     ...options,
     ...names(options.name),
-    importMapPath: joinPathFragments(
-      offsetFromRoot(options.projectRoot),
-      'import_map.json'
-    ),
-    template: '',
+    srcDir: projectConfig.sourceRoot,
+    tmpl: '',
   };
   generateFiles(
     tree,
-    join(__dirname, 'files', 'root-files'),
+    join(__dirname, 'files', `platform-${options.platform}`),
     options.projectRoot,
     templateOptions
   );
 
-  generateFiles(
-    tree,
-    join(__dirname, 'files', `framework-${options.framework}`),
-    join(options.projectRoot, 'src'),
-    templateOptions
-  );
+  writeJson(tree, joinPathFragments(options.projectRoot, 'deno.json'), {
+    importMap: `${offsetFromRoot(options.projectRoot)}import_map.json`,
+  });
 }
 
-export function addProjectConfig(tree: Tree, opts: DenoAppNormalizedSchema) {
+export function addProject(tree: Tree, opts: NormalizedSchema) {
   const coverageDirectory = joinPathFragments(
     'coverage',
     opts.rootProject ? opts.name : opts.projectRoot
   );
+
   const targets: ProjectConfiguration['targets'] = {
     build: {
       executor: '@nrwl/deno:emit',
@@ -117,8 +129,9 @@ export function addProjectConfig(tree: Tree, opts: DenoAppNormalizedSchema) {
     },
   };
 
-  if (opts.withWatch === true) {
-    targets.serve.options.watch = true;
+  if (opts.platform === 'netlify') {
+    // No reason to build on netlify as the project sourceRoot is the direct script ran
+    delete targets.build;
   }
 
   if (opts.linter === 'none') {
@@ -138,3 +151,25 @@ export function addProjectConfig(tree: Tree, opts: DenoAppNormalizedSchema) {
     tags: opts.parsedTags,
   });
 }
+
+async function setupDeployConfig(tree: Tree, opts: NormalizedSchema) {
+  const setupTask = await denoSetupServerless(tree, {
+    project: opts.projectName,
+    platform: opts.platform,
+  });
+  // delete fn folder from setup-serverless
+  tree.delete(joinPathFragments(opts.projectRoot, 'functions'));
+
+  const projectConfig = readProjectConfiguration(tree, opts.projectName);
+
+  if (projectConfig.targets?.['serve-functions']) {
+    projectConfig.targets.serve = projectConfig.targets['serve-functions'];
+    delete projectConfig.targets['serve-functions'];
+  }
+
+  updateProjectConfiguration(tree, opts.projectName, projectConfig);
+
+  return setupTask;
+}
+
+export default denoServerlessGenerator;

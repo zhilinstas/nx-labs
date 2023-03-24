@@ -90,7 +90,8 @@ describe('setup-serverless --platform=netlify', () => {
         },
       }
     `);
-    expect(tree.read('netlify.toml', 'utf-8')).toMatchInlineSnapshot(`
+    expect(tree.read('apps/my-app/netlify.toml', 'utf-8'))
+      .toMatchInlineSnapshot(`
       "# Netlify Configuration File: https://docs.netlify.com/configure-builds/file-based-configuration
       [build]
         # custom directory where edge functions are located.
